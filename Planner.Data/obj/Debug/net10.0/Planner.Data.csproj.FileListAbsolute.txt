@@ -1,0 +1,14 @@
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/bin/Debug/net10.0/Planner.Data.deps.json
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/bin/Debug/net10.0/Planner.Data.runtimeconfig.json
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/bin/Debug/net10.0/Planner.Data.dll
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/bin/Debug/net10.0/Planner.Data.pdb
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.csproj.AssemblyReference.cache
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.GeneratedMSBuildEditorConfig.editorconfig
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.AssemblyInfoInputs.cache
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.AssemblyInfo.cs
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.csproj.CoreCompileInputs.cache
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.dll
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/refint/Planner.Data.dll
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.pdb
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/Planner.Data.genruntimeconfig.cache
+/home/zack/Documents/repos/racePlanner/endurance-planner/Planner.Data/obj/Debug/net10.0/ref/Planner.Data.dll

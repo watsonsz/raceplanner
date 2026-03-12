@@ -1,0 +1,63 @@
+:root {
+  --bg: #0b0b0b;
+  --panel: #0f0f0f;
+  --text: #ffffff;
+  --border: #deddda;
+  --accent: #ff6b6b;
+
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  width: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.lobby-grid {
+  display: grid;
+  grid-template-columns: minmax(700px, 900px) minmax(300px, 360px);
+  gap: 24px;
+  align-items: start;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+  .lobby-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+}

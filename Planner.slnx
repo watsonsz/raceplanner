@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Planner.Api/Planner.Api.csproj" />
+  <Project Path="Planner.Data/Planner.Data.csproj" />
+</Solution>
