@@ -12,7 +12,16 @@ public static class Mapper
             r.StartUtc,
             r.EndUtc,
             r.IntervalMinutes,
-            PlannerJson.ThemeFromJson(r.ThemeJson)
+            PlannerJson.ThemeFromJson(r.ThemeJson),
+            r.TrackDaylightConditions
+                ? new DaylightSettingsDto(
+                    true,
+                    r.RaceStartCondition ?? "day",
+                    r.TimeUntilTransitionMinutes ?? 0,
+                    r.LengthOfDayMinutes ?? 0,
+                    r.LengthOfNightMinutes ?? 0
+                )
+                : null
         );
 
     public static PersonScheduleDto ToPersonDto(PersonScheduleEntity p)

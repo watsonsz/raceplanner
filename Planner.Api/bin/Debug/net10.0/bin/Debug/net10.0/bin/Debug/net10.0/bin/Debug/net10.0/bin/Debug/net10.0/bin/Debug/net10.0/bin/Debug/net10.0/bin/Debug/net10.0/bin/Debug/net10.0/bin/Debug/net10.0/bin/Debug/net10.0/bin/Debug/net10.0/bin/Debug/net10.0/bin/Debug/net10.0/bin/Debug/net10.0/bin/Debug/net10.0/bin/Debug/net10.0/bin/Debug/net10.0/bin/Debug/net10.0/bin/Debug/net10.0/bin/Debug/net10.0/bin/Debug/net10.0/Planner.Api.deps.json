@@ -9,6 +9,7 @@
       "Planner.Api/1.0.0": {
         "dependencies": {
           "Microsoft.EntityFrameworkCore.Design": "10.0.3",
+          "Microsoft.EntityFrameworkCore.Sqlite": "10.0.3",
           "Planner.Data": "1.0.0"
         },
         "runtime": {

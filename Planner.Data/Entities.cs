@@ -72,6 +72,16 @@ public class RaceRoom
 
     public DateTimeOffset CreatedUtc { get; set; } = DateTimeOffset.UtcNow;
 
+    // NEW: daylight tracking
+    public bool TrackDaylightConditions { get; set; }
+
+    [MaxLength(16)]
+    public string? RaceStartCondition { get; set; } // "day" | "night"
+
+    public int? TimeUntilTransitionMinutes { get; set; }
+    public int? LengthOfDayMinutes { get; set; }
+    public int? LengthOfNightMinutes { get; set; }
+
     public List<PersonScheduleEntity> People { get; set; } = new();
     public List<Vehicle> Vehicles { get; set; } = new();
     public List<DriverVehicleProficiency> Proficiencies { get; set; } = new();

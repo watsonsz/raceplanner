@@ -233,13 +233,15 @@ return (
 <section style={styles.card}>
   <h2 style={{ marginTop: 0 }}>Race Schedule</h2>
   <ScheduleSection
-    blocks={blocks}
-    drivers={drivers}
-    pit={pit}
-    vehicles={vehicles}
-    schedule={schedule}
-    onChange={onChangeScheduleEntry}
-  />
+  blocks={blocks}
+  intervalMinutes={room.intervalMinutes}
+  daylightSettings={room.daylightSettings}
+  drivers={drivers}
+  pit={pit}
+  vehicles={vehicles}
+  schedule={schedule}
+  onChange={onChangeScheduleEntry}
+/>
 </section>
     </div>
   </div>
@@ -323,7 +325,16 @@ function VehicleProficiencySection({ drivers, vehicles, proficiencies, onChange 
   );
 }
 
-function ScheduleSection({ blocks, drivers, pit, vehicles, schedule, onChange }) {
+function ScheduleSection({
+  blocks,
+  intervalMinutes,
+  daylightSettings,
+  drivers,
+  pit,
+  vehicles,
+  schedule,
+  onChange
+}) {
   function getEntry(blockIndex, role) {
     return schedule.find((s) => s.blockIndex === blockIndex && s.role === role);
   }
@@ -343,13 +354,25 @@ function ScheduleSection({ blocks, drivers, pit, vehicles, schedule, onChange })
           {blocks.map((block, i) => {
             const driverEntry = getEntry(i, "driver");
             const pitEntry = getEntry(i, "pitcrew");
+            const offsetMinutes = i * intervalMinutes;
+            const daylightCondition = getDaylightConditionAtOffset(daylightSettings, offsetMinutes);
+            const daylightIcon = getDaylightIcon(daylightCondition);
 
             return (
               <tr key={i}>
                 <td style={tableStyles.td}>
-                  {block.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  {" – "}
-                  {block.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  <div style={tableStyles.timeCell}>
+                    {daylightIcon && (
+                      <span title={daylightCondition === "day" ? "Day" : "Night"} style={tableStyles.daylightIcon}>
+                        {daylightIcon}
+                      </span>
+                    )}
+                    <span>
+                      {block.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {" – "}
+                      {block.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
                 </td>
 
                 <td style={tableStyles.td}>
@@ -406,7 +429,42 @@ function ScheduleSection({ blocks, drivers, pit, vehicles, schedule, onChange })
     </div>
   );
 }
+
+function getDaylightConditionAtOffset(daylightSettings, offsetMinutes) {
+  if (!daylightSettings?.enabled) return null;
+
+  let currentCondition = daylightSettings.raceStartCondition;
+  let remaining = Number(daylightSettings.timeUntilTransitionMinutes);
+  let minutesLeft = Number(offsetMinutes);
+
+  while (minutesLeft >= remaining) {
+    minutesLeft -= remaining;
+    currentCondition = currentCondition === "day" ? "night" : "day";
+    remaining =
+      currentCondition === "day"
+        ? Number(daylightSettings.lengthOfDayMinutes)
+        : Number(daylightSettings.lengthOfNightMinutes);
+  }
+
+  return currentCondition;
+}
+
+function getDaylightIcon(condition) {
+  if (condition === "day") return "☀️";
+  if (condition === "night") return "🌙";
+  return "";
+}
+
 const tableStyles = {
+  timeCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px"
+  },
+  daylightIcon: {
+    fontSize: "1rem",
+    lineHeight: 1
+  },
   th: {
     borderBottom: "1px solid var(--border)",
     padding: "10px",

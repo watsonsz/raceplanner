@@ -56,18 +56,31 @@ app.MapPost("/api/rooms", async (
         code = RoomLogic.NewRoomCode();
     } while (await db.Rooms.AnyAsync(r => r.Code == code));
 
-    var room = new RaceRoom
-    {
-        Code = code,
-        RaceName = req.RaceName.Trim(),
-        TeamName = req.TeamName.Trim(),
-        StartUtc = req.StartUtc.ToUniversalTime(),
-        EndUtc = req.EndUtc.ToUniversalTime(),
-        IntervalMinutes = req.IntervalMinutes,
-        ThemeJson = PlannerJson.ThemeToJson(req.Theme),
-        CreatedUtc = DateTimeOffset.UtcNow
-    };
+var room = new RaceRoom
+{
+    Code = code,
+    RaceName = req.RaceName.Trim(),
+    TeamName = req.TeamName.Trim(),
+    StartUtc = req.StartUtc.ToUniversalTime(),
+    EndUtc = req.EndUtc.ToUniversalTime(),
+    IntervalMinutes = req.IntervalMinutes,
+    ThemeJson = PlannerJson.ThemeToJson(req.Theme),
+    CreatedUtc = DateTimeOffset.UtcNow,
 
+    TrackDaylightConditions = req.DaylightSettings?.Enabled == true,
+    RaceStartCondition = req.DaylightSettings?.Enabled == true
+        ? req.DaylightSettings.RaceStartCondition.Trim().ToLowerInvariant()
+        : null,
+    TimeUntilTransitionMinutes = req.DaylightSettings?.Enabled == true
+        ? req.DaylightSettings.TimeUntilTransitionMinutes
+        : null,
+    LengthOfDayMinutes = req.DaylightSettings?.Enabled == true
+        ? req.DaylightSettings.LengthOfDayMinutes
+        : null,
+    LengthOfNightMinutes = req.DaylightSettings?.Enabled == true
+        ? req.DaylightSettings.LengthOfNightMinutes
+        : null
+};
     db.Rooms.Add(room);
     await db.SaveChangesAsync();
 
@@ -151,6 +164,21 @@ static IResult? ValidateCreate(CreateRoomRequest req)
     var durationHours = (req.EndUtc - req.StartUtc).TotalHours;
     if (durationHours <= 0.1) return Results.BadRequest("Race duration too short.");
     if (durationHours > 72) return Results.BadRequest("Race duration too long (cap 72h).");
+    if (req.DaylightSettings is not null && req.DaylightSettings.Enabled)
+{
+    var startCondition = req.DaylightSettings.RaceStartCondition?.Trim().ToLowerInvariant();
+    if (startCondition is not ("day" or "night"))
+        return Results.BadRequest("RaceStartCondition must be 'day' or 'night'.");
+
+    if (req.DaylightSettings.TimeUntilTransitionMinutes < 0)
+        return Results.BadRequest("TimeUntilTransitionMinutes must be >= 0.");
+
+    if (req.DaylightSettings.LengthOfDayMinutes <= 0)
+        return Results.BadRequest("LengthOfDayMinutes must be > 0.");
+
+    if (req.DaylightSettings.LengthOfNightMinutes <= 0)
+        return Results.BadRequest("LengthOfNightMinutes must be > 0.");
+}
 
     return null; // ✅ valid
 }
@@ -399,17 +427,26 @@ app.MapGet("/api/rooms", async (PlannerDb db) =>
         .ToListAsync();
 
     var result = rooms
-        .OrderByDescending(r => r.CreatedUtc)
-        .Select(r => new RoomSummaryDto(
-            r.Code,
-            r.RaceName,
-            r.TeamName,
-            r.StartUtc,
-            r.EndUtc,
-            r.IntervalMinutes,
-            PlannerJson.ThemeFromJson(r.ThemeJson)
-        ))
-        .ToList();
+    .OrderByDescending(r => r.CreatedUtc)
+    .Select(r => new RoomSummaryDto(
+        r.Code,
+        r.RaceName,
+        r.TeamName,
+        r.StartUtc,
+        r.EndUtc,
+        r.IntervalMinutes,
+        PlannerJson.ThemeFromJson(r.ThemeJson),
+        r.TrackDaylightConditions
+            ? new DaylightSettingsDto(
+                true,
+                r.RaceStartCondition ?? "day",
+                r.TimeUntilTransitionMinutes ?? 0,
+                r.LengthOfDayMinutes ?? 0,
+                r.LengthOfNightMinutes ?? 0
+            )
+            : null
+    ))
+    .ToList();
 
     return Results.Json(result);
 });

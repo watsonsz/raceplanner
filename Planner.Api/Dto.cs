@@ -2,6 +2,14 @@ using Planner.Data;
 
 namespace Planner.Api;
 
+public record DaylightSettingsDto(
+    bool Enabled,
+    string RaceStartCondition,
+    int TimeUntilTransitionMinutes,
+    int LengthOfDayMinutes,
+    int LengthOfNightMinutes
+);
+
 public record CreateRoomRequest(
     string RaceName,
     string TeamName,
@@ -9,7 +17,8 @@ public record CreateRoomRequest(
     DateTimeOffset EndUtc,
     int IntervalMinutes,
     RoomTheme Theme,
-    List<string> Vehicles
+    List<string> Vehicles,
+    DaylightSettingsDto? DaylightSettings
 );
 
 public record VehicleDto(int Id, string Name);
@@ -42,7 +51,8 @@ public record RoomSummaryDto(
     DateTimeOffset StartUtc,
     DateTimeOffset EndUtc,
     int IntervalMinutes,
-    RoomTheme Theme
+    RoomTheme Theme,
+    DaylightSettingsDto? DaylightSettings
 );
 
 public record PersonScheduleDto(
