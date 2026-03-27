@@ -81,18 +81,24 @@ export default function RoomView({ code, onExit }) {
   async function onAdd(groupKey) {
     const name = prompt(groupKey === "drivers" ? "Driver name?" : "Crew name?");
     if (!name) return;
-    await addPerson(code, groupKey, name.trim());
+
+    const nextState = await addPerson(code, groupKey, name.trim());
+    setState(nextState);
+    applyTheme(nextState.room.theme ?? defaultTheme);
   }
 
   async function onRemove(groupKey, id) {
-    await removePerson(code, groupKey, id);
+    const nextState = await removePerson(code, groupKey, id);
+    setState(nextState);
+    applyTheme(nextState.room.theme ?? defaultTheme);
   }
 
   async function onThemeChange(nextTheme) {
     applyTheme(nextTheme);
     await updateTheme(code, nextTheme);
   }
-  async function onChangeProficiency(personId, vehicleId, rating) {
+
+async function onChangeProficiency(personId, vehicleId, rating) {
   const next = [...proficiencies];
   const idx = next.findIndex(
     (p) => p.personId === personId && p.vehicleId === vehicleId
@@ -105,7 +111,12 @@ export default function RoomView({ code, onExit }) {
   }
 
   setState((prev) => prev ? { ...prev, proficiencies: next } : prev);
-  await updateProficiencies(code, next);
+
+  const nextState = await updateProficiencies(code, next);
+  if (nextState) {
+    setState(nextState);
+    applyTheme(nextState.room.theme ?? defaultTheme);
+  }
 }
 
 async function onChangeScheduleEntry(blockIndex, role, field, value) {
@@ -127,16 +138,15 @@ async function onChangeScheduleEntry(blockIndex, role, field, value) {
     [field]: value === "" ? (field === "vehicleId" ? null : "") : value
   };
 
-  // if unassigned, remove empty entries
-  const cleaned = next.filter((s) => {
-    if (s.role === "driver") {
-      return s.personId;
-    }
-    return s.personId;
-  });
+  const cleaned = next.filter((s) => s.personId);
 
   setState((prev) => prev ? { ...prev, schedule: cleaned } : prev);
-  await updateSchedule(code, cleaned);
+
+  const nextState = await updateSchedule(code, cleaned);
+  if (nextState) {
+    setState(nextState);
+    applyTheme(nextState.room.theme ?? defaultTheme);
+  }
 }
 
 if (!state) {
