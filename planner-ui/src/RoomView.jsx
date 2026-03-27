@@ -352,21 +352,22 @@ function ScheduleSection({
         </thead>
         <tbody>
           {blocks.map((block, i) => {
-            const driverEntry = getEntry(i, "driver");
-            const pitEntry = getEntry(i, "pitcrew");
-            const offsetMinutes = i * intervalMinutes;
-            const daylightCondition = getDaylightConditionAtOffset(daylightSettings, offsetMinutes);
-            const daylightIcon = getDaylightIcon(daylightCondition);
+           const driverEntry = getEntry(i, "driver");
+           const pitEntry = getEntry(i, "pitcrew");
+           const offsetMinutes = i * intervalMinutes;
+           const daylightState = getDaylightStateForInterval(daylightSettings, offsetMinutes, intervalMinutes);
+           const daylightIcon = getDaylightIcon(daylightState);
+           const daylightLabel = getDaylightLabel(daylightState); 
 
             return (
               <tr key={i}>
                 <td style={tableStyles.td}>
                   <div style={tableStyles.timeCell}>
-                    {daylightIcon && (
-                      <span title={daylightCondition === "day" ? "Day" : "Night"} style={tableStyles.daylightIcon}>
-                        {daylightIcon}
-                      </span>
-                    )}
+                 {daylightIcon && (
+                    <div style={tableStyles.daylightIcon}>
+                      {daylightIcon}
+                    </div>
+                  )} 
                     <span>
                       {block.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       {" – "}
@@ -430,12 +431,51 @@ function ScheduleSection({
   );
 }
 
+function getDaylightStateForInterval(daylightSettings, offsetMinutes, intervalMinutes) {
+  if (!daylightSettings?.enabled) return null;
+
+  const startCondition = getDaylightConditionAtOffset(daylightSettings, offsetMinutes);
+  if (!startCondition) return null;
+
+  const minutesUntilTransition = getMinutesUntilNextTransition(daylightSettings, offsetMinutes);
+
+  const hasTransitionDuringInterval =
+    minutesUntilTransition !== null && minutesUntilTransition < intervalMinutes;
+
+  if (!hasTransitionDuringInterval) {
+    return {
+      startCondition,
+      type: startCondition
+    };
+  }
+
+  if (startCondition === "day") {
+    return {
+      startCondition,
+      type: "sunset"
+    };
+  }
+
+  return {
+    startCondition,
+    type: "sunrise"
+  };
+}
+
 function getDaylightConditionAtOffset(daylightSettings, offsetMinutes) {
   if (!daylightSettings?.enabled) return null;
 
   let currentCondition = daylightSettings.raceStartCondition;
   let remaining = Number(daylightSettings.timeUntilTransitionMinutes);
   let minutesLeft = Number(offsetMinutes);
+
+  if (remaining < 0) return null;
+  if (
+    Number(daylightSettings.lengthOfDayMinutes) <= 0 ||
+    Number(daylightSettings.lengthOfNightMinutes) <= 0
+  ) {
+    return null;
+  }
 
   while (minutesLeft >= remaining) {
     minutesLeft -= remaining;
@@ -444,22 +484,96 @@ function getDaylightConditionAtOffset(daylightSettings, offsetMinutes) {
       currentCondition === "day"
         ? Number(daylightSettings.lengthOfDayMinutes)
         : Number(daylightSettings.lengthOfNightMinutes);
+
+    if (remaining <= 0) return null;
   }
 
   return currentCondition;
 }
 
-function getDaylightIcon(condition) {
-  if (condition === "day") return "☀️";
-  if (condition === "night") return "🌙";
-  return "";
+function getMinutesUntilNextTransition(daylightSettings, offsetMinutes) {
+  if (!daylightSettings?.enabled) return null;
+
+  let currentCondition = daylightSettings.raceStartCondition;
+  let remaining = Number(daylightSettings.timeUntilTransitionMinutes);
+  let minutesLeft = Number(offsetMinutes);
+
+  if (remaining < 0) return null;
+  if (
+    Number(daylightSettings.lengthOfDayMinutes) <= 0 ||
+    Number(daylightSettings.lengthOfNightMinutes) <= 0
+  ) {
+    return null;
+  }
+
+  while (minutesLeft >= remaining) {
+    minutesLeft -= remaining;
+    currentCondition = currentCondition === "day" ? "night" : "day";
+    remaining =
+      currentCondition === "day"
+        ? Number(daylightSettings.lengthOfDayMinutes)
+        : Number(daylightSettings.lengthOfNightMinutes);
+
+    if (remaining <= 0) return null;
+  }
+
+  return remaining - minutesLeft;
 }
 
+function getDaylightIcon(daylightState) {
+  if (!daylightState) return null;
+
+  return <DaylightIcon type={daylightState.type} />;
+}
+
+function DaylightIcon({ type }) {
+  return (
+    <div style={iconStyles.wrapper} title={getDaylightLabel({ type })}>
+      {type === "day" && <div style={iconStyles.sun} />}
+     {type === "night" && (
+        <div style={iconStyles.moon}>
+          <div style={iconStyles.moonCut} />
+        </div>
+      )} 
+      {type === "sunrise" && (
+        <div style={iconStyles.transition}>
+          <div style={iconStyles.moonHalf} />
+          <div style={iconStyles.sunHalf} />
+        </div>
+      )}
+      {type === "sunset" && (
+        <div style={iconStyles.transition}>
+          <div style={iconStyles.sunHalf} />
+          <div style={iconStyles.moonHalf} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getDaylightLabel(daylightState) {
+  if (!daylightState) return "";
+
+  switch (daylightState.type) {
+    case "day":
+      return "Day";
+    case "night":
+      return "Night";
+    case "sunrise":
+      return "Sunrise during interval";
+    case "sunset":
+      return "Sunset during interval";
+    default:
+      return "";
+  }
+}
+const DAY_COLOR="#f5c542";
+const NIGHT_COLOR="#2f4f7a"
 const tableStyles = {
   timeCell: {
     display: "flex",
     alignItems: "center",
-    gap: "8px"
+    gap: "10px"
   },
   daylightIcon: {
     fontSize: "1rem",
@@ -488,6 +602,66 @@ const tableStyles = {
     border: "1px solid var(--border)",
     borderRadius: "8px",
     padding: "8px"
+  }
+};
+const iconStyles = {
+  wrapper: {
+    width: 22,
+    height: 22,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  // full sun
+  sun: {
+    width: 14,
+    height: 14,
+    borderRadius: "50%",
+    background: DAY_COLOR,
+    boxShadow: `0 0 6px ${DAY_COLOR}`
+  },
+
+  // crescent moon
+  moon: {
+    width: 14,
+    height: 14,
+    borderRadius: "50%",
+    background: NIGHT_COLOR,
+    position: "relative",
+    overflow: "hidden",
+    boxShadow: `0 0 6px ${NIGHT_COLOR}`
+  },
+
+  // fake crescent cutout
+  moonCut: {
+    position: "absolute",
+    top: 0,
+    left: 5,
+    width: 14,
+    height: 14,
+    borderRadius: "50%",
+    background: "var(--panel)"
+  },
+
+  // sunrise/sunset container
+  transition: {
+    display: "flex",
+    width: 16,
+    height: 12,
+    borderRadius: 5,
+    overflow: "hidden",
+    border: "1px solid var(--border)"
+  },
+
+  sunHalf: {
+    flex: 1,
+    background: DAY_COLOR
+  },
+
+  moonHalf: {
+    flex: 1,
+    background: NIGHT_COLOR
   }
 };
 const styles = {
